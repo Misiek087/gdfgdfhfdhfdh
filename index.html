@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zaawansowany System Zarządzania Zadaniami </title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <div class="app-container">
+    
+        <header class="app-header">
+            <h1><i class="fas fa-tasks"></i> Zaawansowany System Zarządzania</h1>
+            <div class="header-controls">
+                <button id="theme-toggle" class="btn"><i class="fas fa-moon"></i></button>
+                <button id="export-btn" class="btn"><i class="fas fa-file-export"></i> Eksport</button>
+                <button id="import-btn" class="btn"><i class="fas fa-file-import"></i> Import</button>
+            </div>
+        </header>
+
+        <div class="main-container">
+            <aside class="sidebar">
+                <div class="sidebar-section">
+                    <h2><i class="fas fa-filter"></i> Filtry</h2>
+                    <div class="filter-group">
+                        <label for="priority-filter">Priorytet:</label>
+                        <select id="priority-filter" class="form-control">
+                            <option value="all">Wszystkie</option>
+                            <option value="1">Krytyczny</option>
+                            <option value="2">Wysoki</option>
+                            <option value="3">Średni</option>
+                            <option value="4">Niski</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="category-filter">Kategoria:</label>
+                        <select id="category-filter" class="form-control">
+                            <option value="all">Wszystkie</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="status-filter">Status:</label>
+                        <select id="status-filter" class="form-control">
+                            <option value="all">Wszystkie</option>
+                            <option value="todo">Do zrobienia</option>
+                            <option value="in-progress">W trakcie</option>
+                            <option value="done">Zakończone</option>
+                        </select>
+                    </div>
+                    <button id="apply-filters" class="btn btn-primary">Zastosuj filtry</button>
+                    <button id="reset-filters" class="btn btn-secondary">Resetuj filtry</button>
+                </div>
+
+                <div class="sidebar-section">
+                    <h2><i class="fas fa-chart-pie"></i> Statystyki</h2>
+                    <div class="stats-container">
+                        <div class="stat-item">
+                            <span class="stat-value" id="total-tasks">0</span>
+                            <span class="stat-label">Wszystkie zadania</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-value" id="completed-tasks">0</span>
+                            <span class="stat-label">Zakończone</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-value" id="overdue-tasks">0</span>
+                            <span class="stat-label">Po terminie</span>
+                        </div>
+                    </div>
+                    <canvas id="stats-chart"></canvas>
+                </div>
+            </aside>
+
+            <main class="content">
+                <div class="view-controls">
+                    <button class="view-btn active" data-view="list"><i class="fas fa-list"></i> Lista</button>
+                    <button class="view-btn" data-view="calendar"><i class="fas fa-calendar-alt"></i> Kalendarz</button>
+                    <button class="view-btn" data-view="kanban"><i class="fas fa-columns"></i> Kanban</button>
+                </div>
+
+                <div class="task-view" id="list-view">
+                    <div class="task-list-header">
+                        <h2><i class="fas fa-tasks"></i> Lista zadań</h2>
+                        <button id="add-task-btn" class="btn btn-primary"><i class="fas fa-plus"></i> Dodaj zadanie</button>
+                    </div>
+                    <div class="task-list" id="task-list-container">
+                    </div>
+                </div>
+
+                <div class="task-view hidden" id="calendar-view">
+                    <div class="calendar-header">
+                        <h2><i class="fas fa-calendar-alt"></i> Kalendarz</h2>
+                        <div class="calendar-nav">
+                            <button id="prev-month" class="btn"><i class="fas fa-chevron-left"></i></button>
+                            <span id="current-month">Maj 2023</span>
+                            <button id="next-month" class="btn"><i class="fas fa-chevron-right"></i></button>
+                        </div>
+                        <select id="calendar-view-selector" class="form-control">
+                            <option value="month">Miesiąc</option>
+                            <option value="week">Tydzień</option>
+                            <option value="day">Dzień</option>
+                        </select>
+                    </div>
+                    <div class="calendar-container" id="calendar-container">
+                    </div>
+                </div>
+
+                <div class="task-view hidden" id="kanban-view">
+                    <h2><i class="fas fa-columns"></i> Tablica Kanban</h2>
+                    <div class="kanban-board">
+                        <div class="kanban-column" data-status="todo">
+                            <h3>Do zrobienia</h3>
+                            <div class="kanban-tasks" id="todo-column">
+                            </div>
+                        </div>
+                        <div class="kanban-column" data-status="in-progress">
+                            <h3>W trakcie</h3>
+                            <div class="kanban-tasks" id="in-progress-column">
+                            </div>
+                        </div>
+                        <div class="kanban-column" data-status="done">
+                            <h3>Zakończone</h3>
+                            <div class="kanban-tasks" id="done-column">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <div class="modal hidden" id="task-modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2 id="modal-title">Dodaj nowe zadanie</h2>
+            <form id="task-form">
+                <div class="form-group">
+                    <label for="task-title">Tytuł zadania*</label>
+                    <input type="text" id="task-title" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label for="task-description">Opis</label>
+                    <textarea id="task-description" class="form-control" rows="3"></textarea>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="task-due-date">Termin wykonania</label>
+                        <input type="datetime-local" id="task-due-date" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="task-priority">Priorytet</label>
+                        <select id="task-priority" class="form-control">
+                            <option value="4">Niski</option>
+                            <option value="3" selected>Średni</option>
+                            <option value="2">Wysoki</option>
+                            <option value="1">Krytyczny</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="task-category">Kategoria</label>
+                        <select id="task-category" class="form-control">
+                            <option value="">Brak kategorii</option>
+                        </select>
+                        <button type="button" id="add-category-btn" class="btn btn-small"><i class="fas fa-plus"></i></button>
+                    </div>
+                    <div class="form-group">
+                        <label for="task-tags">Tagi (oddziel przecinkami)</label>
+                        <input type="text" id="task-tags" class="form-control">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="task-parent">Zadanie nadrzędne</label>
+                    <select id="task-parent" class="form-control">
+                        <option value="">Brak (zadanie główne)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="task-reminder">Przypomnienie</label>
+                    <select id="task-reminder" class="form-control">
+                        <option value="">Brak przypomnienia</option>
+                        <option value="5">5 minut przed</option>
+                        <option value="15">15 minut przed</option>
+                        <option value="30">30 minut przed</option>
+                        <option value="60">1 godzina przed</option>
+                        <option value="1440">1 dzień przed</option>
+                    </select>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" id="cancel-task">Anuluj</button>
+                    <button type="submit" class="btn btn-primary" id="save-task">Zapisz zadanie</button>
+                </div>
+                <input type="hidden" id="task-id" value="">
+            </form>
+        </div>
+    </div>
+
+    <div class="modal hidden" id="category-modal">
+        <div class="modal-content small">
+            <span class="close-modal">&times;</span>
+            <h2>Dodaj nową kategorię</h2>
+            <form id="category-form">
+                <div class="form-group">
+                    <label for="category-name">Nazwa kategorii*</label>
+                    <input type="text" id="category-name" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label for="category-parent">Kategoria nadrzędna</label>
+                    <select id="category-parent" class="form-control">
+                        <option value="">Brak (kategoria główna)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="category-color">Kolor</label>
+                    <input type="color" id="category-color" class="form-control" value="#3a86ff">
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" id="cancel-category">Anuluj</button>
+                    <button type="submit" class="btn btn-primary" id="save-category">Zapisz kategorię</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
